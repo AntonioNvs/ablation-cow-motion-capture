@@ -640,12 +640,11 @@
 
 <h1 id="executive-summary">Executive Summary</h1>
 <h2 id="problem-statement">Problem Statement</h2>
-<p>This project extends multi-view motion capture methodologies to both human subjects and arbitrary moving objects, with a particular research focus on the 3D reconstruction of Holstein dairy cows. The challenge is to achieve accurate, high-fidelity 3D reconstruction from calibrated multi-view camera rigs without predefined body models for the cows, overcoming issues related to occlusion, camera synchronization, and environment noise.</p>
+<p>This project applies multi-view motion capture methodologies to arbitrary moving objects, with a particular research focus on the 3D reconstruction of Holstein dairy cows. The challenge is to achieve accurate, high-fidelity 3D reconstruction from calibrated multi-view camera rigs without predefined body models for the cows, overcoming issues related to occlusion, camera synchronization, and environment noise.</p>
 <h2 id="objectives">Objectives</h2>
 <ul>
 <li>Implement a robust multi-view stereo (MVS) pipeline capable of reconstructing dynamic objects like dairy cows.</li>
 <li>Perform ablation studies (e.g., omitting specific cameras, altering contiguous/uniform camera subsets) to determine the minimal optimal rig setup.</li>
-<li>Integrate human pose estimation (MMPose, SMPL-X) and refine extremities (HaMeR hand refinement).</li>
 </ul>
 <h2 id="key-findings-results">Key Findings &amp; Results</h2>
 <p>The ablation experiments on the Holstein dairy cow dataset (<code>cow-2026-07-29</code>) yielded insights into camera placement importance and reconstruction volume. Detailed plots and metric summaries for camera subset ablations and individual camera omissions can be found in the <a href="experiments/ablation_k_contiguous/">Experiments</a> section.</p>
