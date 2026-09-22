@@ -45,7 +45,6 @@ nav:
   - Methodology: methodology.md
   - Setup & Codebase: setup_and_codebase.md
   - Experiments:
-    - Template: experiments/experiment_template.md
     - Ablation - K Contiguous: experiments/ablation_k_contiguous.md
     - Ablation - K Uniform: experiments/ablation_k_uniform.md
     - Ablation - Omit Camera: experiments/ablation_omit_cam.md
