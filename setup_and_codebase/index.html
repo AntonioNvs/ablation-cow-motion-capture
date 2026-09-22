@@ -446,6 +446,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Stages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#support-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -460,13 +488,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-pipeline" class="md-nav__link">
+  <a href="#task-guide-running-the-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running the Pipeline
+        Task Guide (Running the Pipeline)
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Task Guide (Running the Pipeline)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detailed-object-reconstruction-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detailed Object Reconstruction Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -670,25 +715,83 @@
 
 <h1 id="setup-codebase">Setup &amp; Codebase</h1>
 <h2 id="overview">Overview</h2>
-<p>The primary codebase is located in the <code>motion-capture</code> repository, which operates independently from upstream EasyMocap. It contains the following core components:</p>
+<p>The primary codebase is located in the <code>motion-capture</code> repository, which operates independently from upstream EasyMocap. It contains the following core components grouped by role:</p>
+<h3 id="pipeline-stages">Pipeline Stages</h3>
 <ul>
-<li><strong><code>easymocap</code></strong>: The core python package (loaders, SMPL fitting, camera I/O).</li>
-<li><strong><code>apps/</code></strong>: Applications for the pipeline.</li>
-<li><code>apps/calibration/</code>: Chessboard detection, intrinsics, and COLMAP BA.</li>
-<li><code>apps/demo/</code> &amp; <code>apps/preprocess/</code>: Human pose pipelines (2D keypoints → triangulation → SMPL-X).</li>
-<li><code>apps/handfix_hamer/</code>: HaMeR-based hand de-twisting.</li>
-<li><code>apps/reconstruction/</code>: Object (cow) MVS pipeline.</li>
-<li><strong><code>scripts/</code></strong>: SLURM launchers, demo production, and dataset preparation.</li>
-<li><strong><code>config/</code></strong>: Configuration yaml files for pipelines and visualization.</li>
+<li><strong><code>scripts/preprocess/</code></strong>: Dataset preparation (sync gate <span class="arithmatex">\(\rightarrow\)</span> match <span class="arithmatex">\(\rightarrow\)</span> extract <span class="arithmatex">\(\rightarrow\)</span> QC previews).</li>
+<li><strong><code>apps/calibration/</code></strong>: Chessboard detection <span class="arithmatex">\(\rightarrow\)</span> intrinsics <span class="arithmatex">\(\rightarrow\)</span> extrinsics <span class="arithmatex">\(\rightarrow\)</span> COLMAP BA.</li>
+<li><strong><code>apps/preprocess/</code> &amp; <code>apps/demo/</code></strong>: Human pose (2D keypoints <span class="arithmatex">\(\rightarrow\)</span> triangulation <span class="arithmatex">\(\rightarrow\)</span> SMPL-X).</li>
+<li><strong><code>apps/handfix_hamer/</code></strong>: HaMeR-based hand de-twisting / place / smooth after the SMPL-X fit.</li>
+<li><strong><code>apps/reconstruction/</code></strong>: Object (cow) MVS pipeline (sparse SfM <span class="arithmatex">\(\rightarrow\)</span> dense <span class="arithmatex">\(\rightarrow\)</span> visual-hull filter).</li>
 </ul>
+<h3 id="support-components">Support Components</h3>
+<ul>
+<li><strong><code>easymocap/</code></strong>: The core python package (loaders, SMPL fitting, camera I/O). Imported directly as <code>easymocap</code>.</li>
+<li><strong><code>config/</code></strong>: Configuration yaml files for pipelines and per-rig visualization presets (<code>config/viz/</code>).</li>
+<li><strong><code>scripts/</code></strong>: SLURM launchers, demo production, dataset publication, and post-hoc utilities.</li>
+<li><strong><code>data/</code></strong>: Model weights + sample datasets (bulk data lives on cluster storage).</li>
+<li><strong><code>doc/</code></strong>: Report sources (session summaries, sync evals), dated research notes, and skeleton reference images.</li>
+<li><strong><code>share/</code></strong>: Shareable summaries (two-page PDF overviews).</li>
+<li><strong><code>tests/</code></strong>: Unit tests (<code>pytest tests/</code>).</li>
+</ul>
+<blockquote>
+<p><strong>Note on Fork Independence</strong>: This repository began as an EasyMocap fork but no longer tracks upstream. The upstream config-driven framework and unused apps were removed to maintain a lean, specialized pipeline.</p>
+</blockquote>
+<hr />
 <h2 id="environment-hpc-setup">Environment &amp; HPC Setup</h2>
-<p>This project was largely executed on the Digital Research Alliance of Canada (Alliance) cluster. 
-Key notes for reproducing on the cluster:
-- <strong>Python</strong>: Use <code>module load python</code> and standard virtual environments (<code>venv</code>) for python dependencies (Python 3.8+, PyTorch, OpenCV).
-- <strong>External Dependencies</strong>: You will need MMPose, COLMAP (built with CUDA), SMPL-X models, and Segment Anything 3 (SAM3).
+<p>This project was largely executed on the Digital Research Alliance of Canada (Alliance) cluster. </p>
+<p>Key notes for reproducing on the cluster:
+- <strong>Python</strong>: Use <code>module load python</code> and standard virtual environments (<code>venv</code>). Python 3.8+, PyTorch, and OpenCV are required.
+- <strong>External Dependencies</strong>: You will need MMPose, COLMAP (built with CUDA), SMPL-X model files, and Segment Anything 3 (SAM3).
 - <strong>Dense MVS Backends</strong>: Alternative dense backends (ACMMP, DPE-MVS, DVP-MVS) require specific Alliance build patches.
-- <strong>Slurm Gotchas</strong>: Beware of Slurm gotchas when requesting GPUs (e.g., specifying the exact memory and GPU type). Custom CUDA extensions might require careful Wheelhouse configurations.</p>
-<h2 id="running-the-pipeline">Running the Pipeline</h2>
+- <strong>Slurm Gotchas</strong>: Beware of Slurm gotchas when requesting GPUs (e.g., specifying the exact memory and GPU type). Custom CUDA extensions might require careful Wheelhouse configurations.
+- <strong>Camera Synchronization</strong>: External capture-time synchronization relies on <strong>Argus</strong> (a separate in-house repository).</p>
+<hr />
+<h2 id="task-guide-running-the-pipeline">Task Guide (Running the Pipeline)</h2>
+<p>Here is a quick reference for running the various pipelines:</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Entry Script / Path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Preprocess new capture session</strong></td>
+<td><code>run_sync_pipeline.py &lt;raw&gt; --threshold 16ms</code></td>
+</tr>
+<tr>
+<td><strong>Camera Calibration</strong></td>
+<td><code>detect_calibration_board.py &lt;clip&gt; --mode charuco</code></td>
+</tr>
+<tr>
+<td><strong>Reconstruct Cow (Object MVS)</strong></td>
+<td><code>preprocess_segment_sam3.py &lt;obj&gt; --frames a:b:s</code></td>
+</tr>
+<tr>
+<td><strong>Fit Human Pose (SMPL-X)</strong></td>
+<td><code>extract_keypoints.py &lt;data&gt; --mode mmpose</code></td>
+</tr>
+<tr>
+<td><strong>Fix Twisted SMPL-X Hands</strong></td>
+<td>See extract <span class="arithmatex">\(\rightarrow\)</span> fuse <span class="arithmatex">\(\rightarrow\)</span> place <span class="arithmatex">\(\rightarrow\)</span> smooth flow in <code>apps/handfix_hamer/</code></td>
+</tr>
+<tr>
+<td><strong>Render 3D Results</strong></td>
+<td><code>export_scene_ply</code> <span class="arithmatex">\(\rightarrow\)</span> headless Blender</td>
+</tr>
+<tr>
+<td><strong>Produce Demo Videos</strong></td>
+<td><code>launch_cow_1_demo.sh</code> in <code>scripts/slurm/demo_production/</code></td>
+</tr>
+<tr>
+<td><strong>Publish Dataset</strong></td>
+<td><code>build_deliverable.sh</code> in <code>scripts/publish/dataset/</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="detailed-object-reconstruction-commands">Detailed Object Reconstruction Commands</h3>
 <p>Canonical commands for the cow reconstruction pipeline:</p>
 <p><div class="highlight"><pre><span></span><code><span class="c1"># 1. Foreground masks</span>
 python<span class="w"> </span>apps/reconstruction/preprocess_segment_sam3.py<span class="w"> </span>&lt;obj_path&gt;<span class="w"> </span>--frames<span class="w"> </span><span class="m">0</span>:1426:5
