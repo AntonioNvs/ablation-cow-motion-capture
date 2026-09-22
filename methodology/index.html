@@ -422,10 +422,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-processing" class="md-nav__link">
+  <a href="#data-processing-object-reconstruction-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Processing
+        Data Processing &amp; Object Reconstruction Pipeline
       
     </span>
   </a>
@@ -670,15 +670,23 @@
 
 <h1 id="methodology">Methodology</h1>
 <h2 id="theoretical-background">Theoretical Background</h2>
-<p>Describe the theoretical models or algorithms used in this project.
-MkDocs supports LaTeX for equations using MathJax:</p>
-<div class="arithmatex">\[
-E = mc^2
-\]</div>
-<h2 id="data-processing">Data Processing</h2>
-<p>Explain how the data is acquired, cleaned, and transformed before being fed into the models.</p>
+<p>The project's reconstruction methodology relies on classical (optimization-based) multi-view stereo (MVS), circumventing the need for predefined animal body models. The core pipeline is built as an independent fork of EasyMocap.</p>
+<h2 id="data-processing-object-reconstruction-pipeline">Data Processing &amp; Object Reconstruction Pipeline</h2>
+<p>The reconstruction of moving objects (e.g., cows) follows a highly structured pipeline:</p>
+<ol>
+<li><strong>Foreground Masking</strong>: 
+   Segment Anything 3 (SAM3) is used to extract precise foreground masks of the subjects from the calibrated images.</li>
+<li><strong>Sparse SfM (Structure from Motion)</strong>: 
+   COLMAP performs feature extraction, matching, RANSAC, and Bundle Adjustment (BA) to establish a sparse point cloud and verify camera poses.</li>
+<li><strong>Dense MVS</strong>: 
+   The dense reconstruction relies on several backends to ensure robustness, including COLMAP, ACMMP, DPE-MVS, and DVP-MVS. The fusion step operates with <code>--min_num_pixels=1</code>.</li>
+<li><strong>Post-Filtering (Visual-Hull)</strong>: 
+   A visual-hull filter removes halo artifacts by eroding the SAM masks by a set dilation amount, preserving 3D points that project correctly into the cow masks across a minimum threshold of cameras (e.g., <span class="arithmatex">\(\ge\)</span> 9 out of 11 cameras).</li>
+</ol>
 <h2 id="experimental-design">Experimental Design</h2>
-<p>Describe the approach taken to validate the hypotheses, the metrics used, and the baseline models.</p>
+<p>The ablation studies (<code>cow-2026-07-29</code>) focus on evaluating the robustness of the dense MVS reconstruction. We systematically alter the available camera views during the Dense MVS phase:
+- <strong>K Contiguous/Uniform</strong>: Testing the impact of reducing the camera count <span class="arithmatex">\(K\)</span> using uniformly spaced or contiguous camera clusters.
+- <strong>Omit Camera</strong>: Leave-one-out experiments to measure the unique contribution (importance) of each camera in the 11-camera rig.</p>
 
 
 

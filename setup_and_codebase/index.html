@@ -670,19 +670,39 @@
 
 <h1 id="setup-codebase">Setup &amp; Codebase</h1>
 <h2 id="overview">Overview</h2>
-<p>The primary codebase is located in the <code>motion-capture</code> repository. It contains the following core components:
-- <strong><code>easymocap</code></strong>: The core python module for multi-view capture and processing.
-- <strong><code>apps</code></strong>: Various pipeline applications like calibration, annotation, and reconstruction.
-- <strong><code>scripts</code></strong>: Helper scripts for preprocessing, postprocessing, and Slurm cluster submissions.
-- <strong><code>config</code></strong>: Configuration yaml files for the pipelines.</p>
+<p>The primary codebase is located in the <code>motion-capture</code> repository, which operates independently from upstream EasyMocap. It contains the following core components:</p>
+<ul>
+<li><strong><code>easymocap</code></strong>: The core python package (loaders, SMPL fitting, camera I/O).</li>
+<li><strong><code>apps/</code></strong>: Applications for the pipeline.</li>
+<li><code>apps/calibration/</code>: Chessboard detection, intrinsics, and COLMAP BA.</li>
+<li><code>apps/demo/</code> &amp; <code>apps/preprocess/</code>: Human pose pipelines (2D keypoints → triangulation → SMPL-X).</li>
+<li><code>apps/handfix_hamer/</code>: HaMeR-based hand de-twisting.</li>
+<li><code>apps/reconstruction/</code>: Object (cow) MVS pipeline.</li>
+<li><strong><code>scripts/</code></strong>: SLURM launchers, demo production, and dataset preparation.</li>
+<li><strong><code>config/</code></strong>: Configuration yaml files for pipelines and visualization.</li>
+</ul>
 <h2 id="environment-hpc-setup">Environment &amp; HPC Setup</h2>
 <p>This project was largely executed on the Digital Research Alliance of Canada (Alliance) cluster. 
-Key notes from the <code>drac-harness</code> wiki:
-- Use <code>module load python</code> and standard virtual environments (<code>venv</code>) for python dependencies.
-- Beware of Slurm gotchas when requesting GPUs (e.g., specifying the exact memory and GPU type).
-- Custom CUDA extensions might require careful Wheelhouse configurations.</p>
+Key notes for reproducing on the cluster:
+- <strong>Python</strong>: Use <code>module load python</code> and standard virtual environments (<code>venv</code>) for python dependencies (Python 3.8+, PyTorch, OpenCV).
+- <strong>External Dependencies</strong>: You will need MMPose, COLMAP (built with CUDA), SMPL-X models, and Segment Anything 3 (SAM3).
+- <strong>Dense MVS Backends</strong>: Alternative dense backends (ACMMP, DPE-MVS, DVP-MVS) require specific Alliance build patches.
+- <strong>Slurm Gotchas</strong>: Beware of Slurm gotchas when requesting GPUs (e.g., specifying the exact memory and GPU type). Custom CUDA extensions might require careful Wheelhouse configurations.</p>
 <h2 id="running-the-pipeline">Running the Pipeline</h2>
-<p>To run a general motion-capture pipeline, refer to the scripts in <code>motion-capture/scripts/</code> or submit a job via <code>motion-capture/scripts/slurm/</code>.</p>
+<p>Canonical commands for the cow reconstruction pipeline:</p>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># 1. Foreground masks</span>
+python<span class="w"> </span>apps/reconstruction/preprocess_segment_sam3.py<span class="w"> </span>&lt;obj_path&gt;<span class="w"> </span>--frames<span class="w"> </span><span class="m">0</span>:1426:5
+
+<span class="c1"># 2. Per-frame MVS (SLURM array)</span>
+./scripts/slurm/launch_4d_array.sh<span class="w"> </span>&lt;obj_path&gt;<span class="w"> </span><span class="m">0</span>:1426:5
+
+<span class="c1"># 3. Visual-hull post-filter</span>
+python<span class="w"> </span>-m<span class="w"> </span>apps.reconstruction.tools.visual_hull_filter_pcd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>&lt;fused.ply&gt;<span class="w"> </span>&lt;fused_filtered.ply&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sparse<span class="w"> </span>&lt;stage_a&gt;/work/frame_X/sparse/0<span class="w"> </span>--masks<span class="w"> </span>&lt;dataset&gt;/masks<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--frame<span class="w"> </span>&lt;frame_id&gt;<span class="w"> </span>--erode<span class="w"> </span><span class="m">8</span><span class="w"> </span>--min-cams<span class="w"> </span><span class="m">9</span>
+</code></pre></div>
+<em>(Resource sizing: ~10–15 min per frame on an H100 MIG 3g.40gb node for the 11-camera 4K cow rig).</em></p>
 
 
 
